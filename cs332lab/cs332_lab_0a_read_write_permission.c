@@ -8,6 +8,13 @@
 ///adfasdfa
 int main(int argc, char *argv[])
 {
+
+  if(2 != argc)
+    {
+      printf("\n  : \n");
+      return 1;
+    }
+
   char *filepath = argv[1];
   int returnval;
   // Check file existence
@@ -22,32 +29,32 @@ int main(int argc, char *argv[])
       printf ("%s is not accessible\n", filepath);
     return 1;
   }
+
+  // from here mine
   // Check read access
-  returnval = access(filepath, R_OK);
+  returnval = access(filepath, R_OK); // try to check read access
   if (returnval == 0)  {
     printf("\n %s Read accessible\n", filepath);
   }
   else
-  {
+    {
 
-    printf ("Read [%s]\n",strerror(errno));
+      printf (" %s is not read acessible\n",filepath);
       return 1;
 
-  }
+    }
 
   // Check write access
-  returnval = access(filepath, W_OK);
+  returnval = access(filepath, W_OK); 
   if (returnval == 0)
-  {
-    printf("\n %s write accessible\n", filepath);
-  }
+    {
+      printf("\n %s write accessible\n", filepath);
+    }
   else
-  {
+    {
+      printf("\n %s is not write  accessible\n", filepath);
+      return 1;
 
-    printf ("Write [%s]\n",strerror(errno));
-
-    return 1;
-
-  }
+    }
   return 0;
 }
