@@ -1,0 +1,14 @@
+The output of the code is as follows:
+
+values of a is 10, b is 30,  and process_id is 3233
+values of a is 35, b is 25, and process_id is 3234
+values of a is 35, b is 45, and process_id is 3234
+values of a is 905, b is 25, and process_id is 3238
+
+
+I ran this code multiple times and got the same output. The execution order is always same as Parent P always executes first, Then Q executes. Q forke R. R runs after Q completes. So order is P->Q->R. This is probably because process is small and it finishes before cpu tries to switch.
+Here the process P i.e. the original parent process executes first as we get value a = 10 and b = a +b-5 =10+25-5 = 30 as output. Also its id is smallest. 
+Then its child process Q runs. It has inherited a copy of ‘a’ and ‘b’ from process P. So it prints a = a + b = 10 +25 = 35, and b = 25 before creating its own child. 
+Then this process Q completes and prints a from above and b = b+20 = 45 and finishes.
+Then the child of Q, R executes. It has inherited copy of ‘a’ and ‘b’ from process Q . Value of ‘a’ was modified to a before fork to 35 while b is still 25. So it prints a = (a*b)+30 = (35*25)+30 =875+30 = 905 and b = 25.
+
