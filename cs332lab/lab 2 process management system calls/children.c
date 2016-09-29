@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 
 int main(){
@@ -10,7 +11,7 @@ int main(){
   
   if (child == 0){ // check for process 1
     printf("I am a  Child one process with pid: %d\n", getpid());
-    return 0; // child 1 ends here
+    exit(1); // child 1 ends here
   }
 
   // not child 1
@@ -19,7 +20,7 @@ int main(){
   
   if (child2 == 0){ // check if this is process 2
     printf("I am a  Child two process with pid: %d\n", getpid());
-    return 0; // child 2 ends here
+    exit(1); // child 2 ends here
   }
 
   // not child 1 or 2 i.e. parent
