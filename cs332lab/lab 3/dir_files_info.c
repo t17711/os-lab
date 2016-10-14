@@ -11,7 +11,10 @@ int main (int argc, char** argv)
     printf("Too many arguements\n");
     return 0;
   }
-  char* arg[] = {"ls","-g", "--author","-A", "-F",argv[1],NULL};
+  /*i will call ls with -A for almost all files
+  -l lists its time, size, author, author group,, permission
+*/
+  char* arg[] = {"ls","-l","-A",argv[1],NULL};
   int child = fork();
 
   if (child == 0){
