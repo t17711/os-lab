@@ -1,9 +1,14 @@
 #include <stdio.h>
+
+// i includes some libraries for forking waiting etc
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+// this file was from last weeks task
 #include "sem.h"
+#define PERMS 0666 //0666 - To grant read and write permissions 
+
 
 #define CHILD      			0  			/* Return value of child proc from fork call */
 #define TRUE       			0  
@@ -20,7 +25,19 @@ int main()
 	int status;						// Exit status of child process
 	int bal1, bal2;					// Balance read by processes
 	int flag, flag1;				// End of loop variables
-	
+
+	// Initialize mutex
+	 
+	int mutex;
+
+	// semaphore creation
+	if((mutex=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
+	{
+		printf("\n can't create mutex semaphore");
+   		exit(1);
+ 	}
+	sem_create(mutex,1);
+
 	//Initialize the file balance to be $100
 	fp1 = fopen("balance","w");
 	bal1 = 100;
@@ -47,7 +64,8 @@ int main()
 		N=5;
 		for(i=1;i<=N; i++)
 		{
-			printf("Dear old dad is trying to do update.\n");
+			P(mutex);
+			printf("Dear old dad is trying to do update, so start semaphore.\n");
 			fp1 = fopen("balance", "r+");
 			fscanf(fp1, "%d", &bal2);
 			printf("Dear old dad reads balance = %d \n", bal2);
@@ -60,7 +78,8 @@ int main()
 			fprintf(fp1, "%d \n", bal2);
 			fclose(fp1);
 
-			printf("Dear old dad is done doing update. \n");
+			printf("Dear old dad is done doing update so exit semaphore. \n");
+			V(mutex);
 			sleep(rand()%5);	/* Go have coffee for 0-4 sec. */
 		}
 	}
@@ -81,6 +100,8 @@ int main()
 			flag = FALSE;
 			while(flag == FALSE) 
 			{
+				P(mutex);
+				printf("SON_1 is trying to access file so enter semaphore.\n");
 				fp3 = fopen("attempt" , "r+");
 				fscanf(fp3, "%d", &N_Att);
 				if(N_Att == 0)
@@ -107,13 +128,15 @@ int main()
 						printf("Poor SON_1 write new balance: %d \n", bal2);
 						fprintf(fp2,"%d\n", bal2);
 						fclose(fp2);
-						printf("poor SON_1 done doing update.\n");
 						fseek(fp3,0L, 0);
 						N_Att -=1;
 						fprintf(fp3, "%d\n", N_Att);
 						fclose(fp3);
+						printf("poor SON_1 done doing update so exit semaphore.\n");
 					}
+				
 				}
+				V(mutex);
 			}
 		}
 		else
@@ -132,6 +155,8 @@ int main()
 				flag1 = FALSE;
 				while(flag1 == FALSE) 
 				{
+					P(mutex);		
+					printf("SON_2 is trying to access file so enter semaphore.\n");
 					fp3 = fopen("attempt" , "r+");
 					fscanf(fp3, "%d", &N_Att);
 					if(N_Att == 0)
@@ -159,13 +184,14 @@ int main()
 							fprintf(fp2,"%d\n", bal2);
 							fclose(fp2);
 
-							printf("poor SON_2 done doing update.\n");
 							fseek(fp3,0L, 0);
 							N_Att -=1;
 							fprintf(fp3, "%d\n", N_Att);
 							fclose(fp3);
+							printf("poor SON_2 done doing update so exit semaphore.\n");
 						}
 					}
+					V(mutex);
 				}
 			}
 			else
