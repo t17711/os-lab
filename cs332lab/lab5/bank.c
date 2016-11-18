@@ -59,11 +59,13 @@ int main()
 	}
 	
 	if (pid == CHILD){
-	//First Child Process. Dear old dad tries to do some updates.
+
+		//First Child Process. Dear old dad tries to do some updates.
 	
 		N=5;
 		for(i=1;i<=N; i++)
 		{
+			// insert semaphore P(mutex)
 			P(mutex);
 			printf("Dear old dad is trying to do update, so start semaphore.\n");
 			fp1 = fopen("balance", "r+");
@@ -80,6 +82,8 @@ int main()
 
 			printf("Dear old dad is done doing update so exit semaphore. \n");
 			V(mutex);
+			// insert semaphore V(mutex)
+		
 			sleep(rand()%5);	/* Go have coffee for 0-4 sec. */
 		}
 	}
@@ -100,6 +104,8 @@ int main()
 			flag = FALSE;
 			while(flag == FALSE) 
 			{
+			
+				// insert semaphore P(mutex)
 				P(mutex);
 				printf("SON_1 is trying to access file so enter semaphore.\n");
 				fp3 = fopen("attempt" , "r+");
@@ -136,6 +142,8 @@ int main()
 					}
 				
 				}
+				
+				// insert semaphore V(mutex)
 				V(mutex);
 			}
 		}
@@ -155,6 +163,8 @@ int main()
 				flag1 = FALSE;
 				while(flag1 == FALSE) 
 				{
+	
+					// insert semaphore P(mutex)
 					P(mutex);		
 					printf("SON_2 is trying to access file so enter semaphore.\n");
 					fp3 = fopen("attempt" , "r+");
@@ -191,6 +201,8 @@ int main()
 							printf("poor SON_2 done doing update so exit semaphore.\n");
 						}
 					}
+					
+					// insert semaphore V(mutex)
 					V(mutex);
 				}
 			}
