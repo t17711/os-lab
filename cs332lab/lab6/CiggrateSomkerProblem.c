@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "sem.h"
 
 #define PERMS 0666
 #define turn 10 
@@ -11,52 +10,26 @@ void *tobacco();
 void *match();
 void *paper();
 
-int s_lock, s_agent, s_tobacco,s_paper, s_match; // for semaphore 
+pthread_mutex_t s_lock, s_agent, s_tobacco,s_paper, s_match; // for cuncurrency
 
 void main(){
 
+	// create thread variables for splitting process
 	pthread_t agent_thread, paper_thread, tobacco_thread, match_thread;
 
-	int a, b, c, d; // for pthread
-		
-	// create semaphore
-	// semaphore creation
-	 
-	if((s_lock=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
-	 {
-	   printf("\n can't create lock semaphore");
-	   exit(1);
-	 }
+	int a, b, c, d; // for pthread return
+	
 
-	if((s_agent=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
-	 {
-	   printf("\n can't create agent semaphore");
-	   exit(1);
-	 }
+	pthread_mutex_init(&s_lock, NULL);
+	pthread_mutex_init(&s_match, NULL);
+	pthread_mutex_init(&s_agent, NULL);
+	pthread_mutex_init(&s_paper, NULL);
+	pthread_mutex_init(&s_tobacco, NULL);
 
-	if((s_tobacco=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
-	 {
-	   printf("\n can't create tobacco semaphore");
-	   exit(1);
-	 }
-
-	if((s_paper=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
-	 {
-	   printf("\n can't create paper semaphore");
-	   exit(1);
-	 }
-	if((s_match=semget(IPC_PRIVATE,1,PERMS | IPC_CREAT)) == -1)
-	 {
-	   printf("\n can't create match semaphore");
-	   exit(1);
-	 }
-
-	// initialize all semaphore except lock to 0
-	sem_create(s_match,0);
-	sem_create(s_paper,0);
-	sem_create(s_agent,0);
-	sem_create(s_tobacco,0);
-	sem_create(s_lock,1);
+	pthread_mutex_lock(&s_match);
+	pthread_mutex_lock(&s_agent);
+	pthread_mutex_lock(&s_paper);
+	pthread_mutex_lock(&s_tobacco);
 	// create thread
 	a = pthread_create( &agent_thread, NULL, &agent,NULL);
 	if(a)
@@ -85,11 +58,18 @@ void main(){
 		 fprintf(stderr,"Error - pthread_create() return code: %d\n",d);
 		 exit(EXIT_FAILURE);
 	}
-
+	
+	// end the threads
 	 pthread_join( agent_thread, NULL);
 	 pthread_join( paper_thread, NULL);
 	 pthread_join( tobacco_thread, NULL);
 	 pthread_join( match_thread, NULL);	
+
+	pthread_mutex_destroy(&s_lock);
+	pthread_mutex_destroy(&s_match);
+	pthread_mutex_destroy(&s_agent);
+	pthread_mutex_destroy(&s_paper);
+	pthread_mutex_destroy(&s_tobacco);
 
 	 exit(EXIT_SUCCESS);
 
@@ -98,9 +78,9 @@ void main(){
 
 void *agent(){
 	int n =	turn; 
-	while(n>0){
+	while(n>0){ // do n loop of process
 		n--;
-		P(s_lock);
+		pthread_mutex_lock(&s_lock); // seek its turn for 
 		int randnum = rand()%3+1;
 
 		printf("agent round %d, random number is %d \n", turn-n,randnum);
@@ -108,35 +88,27 @@ void *agent(){
 			printf("Put tobacco on table\n");
 			printf("Put paper on table\n");
 
-			V(s_match);
+			pthread_mutex_unlock(&s_match);
 
 		}
 		else if(randnum == 2){
 			 printf("Put tobacco on table\n");
 			 printf("Put match on table\n");
-			V(s_paper);
+			pthread_mutex_unlock(&s_paper);
 		}
 
 		else{
 		
 			printf(" Put match on table\n");
 			printf("Put paper on table\n");
-			V(s_tobacco);
+			pthread_mutex_unlock(&s_tobacco);
 		}
 		// delete woken proc
 
 			
-		V(s_lock);
-		P(s_agent);
+		pthread_mutex_unlock(&s_lock);
+		pthread_mutex_lock(&s_agent);
 	}
-		printf("\n Clean UP\n");
-	
-		int i;
-		for( i=10;i>0;--i){
-			V(s_tobacco);
-			V(s_paper);
-			V(s_match);
-		}
 
 }
 void *tobacco(){
@@ -144,13 +116,13 @@ void *tobacco(){
 	while(n>0){
 		n--;
 		//printf("tobacco waiting for tobacco\n");
-		P(s_tobacco );  // Sleep right away
+		pthread_mutex_lock(&s_tobacco );  // Sleep right away
 	//	printf("tobacco waiting for lock\n");
-		P(s_lock );
+		pthread_mutex_lock(&s_lock );
 		printf("Pick up match\n");
 		printf("Pick up paper\n");
-		V(s_agent );
-		V(s_lock );
+		pthread_mutex_unlock(&s_agent );
+		pthread_mutex_unlock(&s_lock );
 		printf("Smoke (but don't inhale)\n");
 	}
 }
@@ -161,13 +133,13 @@ void *match(){
 	while(n>0){
 		n--;
 	//	printf("match waiting for match \n");
-		P(s_match );  // Sleep right away
+		pthread_mutex_lock(&s_match );  // Sleep right away
 	//	printf("match waiting for lock\n");
-		P(s_lock );
+		pthread_mutex_lock(&s_lock );
 		printf("Pick up tobacco\n");
 		printf("Pick up paper\n");
-		V(s_agent );
-		V(s_lock );
+		pthread_mutex_unlock(&s_agent );
+		pthread_mutex_unlock(&s_lock );
 		printf("Smoke (but don't inhale)\n");
 	}
 
@@ -178,13 +150,13 @@ void *paper(){
 	while(n>0){
 		n--;
 	//	printf("paper waiting for paper \n");
-		P(s_paper );  // Sleep right away
+		pthread_mutex_lock(&s_paper );  // Sleep right away
 	//	printf("paper waiting for lock \n");
-		P(s_lock );
+		pthread_mutex_lock(&s_lock );
 		printf("Pick up match\n");
 		printf("Pick up tobacco\n");
-		V(s_agent );
-		V(s_lock );
+		pthread_mutex_unlock(&s_agent );
+		pthread_mutex_unlock(&s_lock );
 		printf("Smoke (but don't inhale)\n");
 	}
 }
