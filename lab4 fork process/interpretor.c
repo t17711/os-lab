@@ -14,7 +14,7 @@ int main(int argc, char ** args){
  	char *q = "quit"; // to quit
 	int s = strlen(q);
 	while(1){
-		printf("Enter a command of maximum 50 char to quit\n");
+		printf("Enter a command of maximum 50 char or enter quit to quit\n");
 		scanf("%s",input);
 			
 		// check for quit
